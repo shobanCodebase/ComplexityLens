@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import models.schemas
-
+import analyzer.complexity
 app = FastAPI()
 
 app.add_middleware(
@@ -26,6 +26,6 @@ async def analyze(request: models.schemas.AnalyzeRequest):
         language=request.language,
         execution_time_ms=1.24,
         operation_count=4001,
-        complexity="O(n)",
-        memory_usage_mb=2.31,
+        complexity= analyzer.complexity.estimate_complexity(request.code),
+        memory_usage_mb=2.31
     )
