@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import models.schemas
 import analyzer.complexity
+import analyzer.operation_counter
+
 app = FastAPI()
 
 app.add_middleware(
@@ -22,10 +24,12 @@ async def read_health():
 
 @app.post("/analyze", response_model=models.schemas.AnalyzeResponse)
 async def analyze(request: models.schemas.AnalyzeRequest):
+    op_counts = analyzer.operation_counter.count_operations(request.code, request.input_size)
+    total_operations = sum(op_counts.values())
     return models.schemas.AnalyzeResponse(
         language=request.language,
         execution_time_ms=1.24,
-        operation_count=4001,
-        complexity= analyzer.complexity.estimate_complexity(request.code),
+        operation_count=total_operations,
+        complexity=analyzer.complexity.estimate_complexity(request.code),
         memory_usage_mb=2.31
     )
