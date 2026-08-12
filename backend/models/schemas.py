@@ -17,3 +17,21 @@ class AnalyzeResponse(BaseModel):
         default=[],
         description="Operation counts across a range of input sizes, for charting growth curves"
     )
+
+class CompareItem(BaseModel):
+    name: str = Field(..., description="Display name for this algorithm/snippet")
+    code: str = Field(..., description="The code to analyze")
+    language: str = Field(..., description="The language of the code")
+
+class CompareRequest(BaseModel):
+    items: List[CompareItem] = Field(..., description="List of algorithms to compare")
+    input_size: int = Field(default=1000, description="Input size to use for all comparisons")
+
+class CompareResultItem(BaseModel):
+    name: str
+    success: bool
+    result: AnalyzeResponse | None = None
+    error: str | None = None
+
+class CompareResponse(BaseModel):
+    results: List[CompareResultItem]
