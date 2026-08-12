@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import models.schemas
 import analyzer.complexity
@@ -25,8 +25,15 @@ async def read_health():
 
 @app.post("/analyze", response_model=models.schemas.AnalyzeResponse)
 async def analyze(request: models.schemas.AnalyzeRequest):
-    op_counts = analyzer.operation_counter.count_operations(request.code, request.input_size)
-    total_operations = sum(op_counts.values())
+    try:
+        op_counts = analyzer.operation_counter.count_operations(request.code, request.input_size)
+        total_operations = sum(op_counts.values())
+        complexity = analyzer.complexity.estimate_complexity(request.code)
+    except SyntaxError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not parse code as valid Python: {str(e)}"
+        )
 
     sandbox_result = analyzer.sandbox.run_in_sandbox(request.code)
     execution_time_ms = sandbox_result["execution_time_ms"] or 0.0
@@ -36,6 +43,6 @@ async def analyze(request: models.schemas.AnalyzeRequest):
         language=request.language,
         execution_time_ms=execution_time_ms,
         operation_count=total_operations,
-        complexity=analyzer.complexity.estimate_complexity(request.code),
+        complexity=complexity,
         memory_usage_mb=memory_usage_mb,
     )
