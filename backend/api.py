@@ -4,6 +4,7 @@ import models.schemas
 import analyzer.complexity
 import analyzer.operation_counter
 import analyzer.sandbox
+import analyzer.empirical
 
 app = FastAPI()
 
@@ -14,6 +15,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+GROWTH_CURVE_INPUT_SIZES = [10, 100, 500, 1000, 5000]
 
 @app.get("/")
 async def read_root():
@@ -29,6 +32,7 @@ async def analyze(request: models.schemas.AnalyzeRequest):
         op_counts = analyzer.operation_counter.count_operations(request.code, request.input_size)
         total_operations = sum(op_counts.values())
         complexity = analyzer.complexity.estimate_complexity(request.code)
+        growth_data = analyzer.empirical.collect_operation_data(request.code, GROWTH_CURVE_INPUT_SIZES)
     except SyntaxError as e:
         raise HTTPException(
             status_code=400,
@@ -45,4 +49,5 @@ async def analyze(request: models.schemas.AnalyzeRequest):
         operation_count=total_operations,
         complexity=complexity,
         memory_usage_mb=memory_usage_mb,
+        growth_data=growth_data,
     )
