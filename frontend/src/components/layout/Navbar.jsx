@@ -1,15 +1,13 @@
 import React from 'react';
 import { 
-  Code2, 
-  Sparkles, 
   Play, 
   RotateCcw, 
-  FileCode, 
   Settings,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
 
-export const Navbar = () => {
+export const Navbar = ({ onAnalyze, isAnalyzing, onReset, backendOnline }) => {
   return (
     <header className="h-14 border-b border-slate-800/80 bg-[#0f121d]/90 backdrop-blur-md px-4 flex items-center justify-between shrink-0 select-none">
       {/* Brand & Logo */}
@@ -34,18 +32,25 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* Center Action Toolbar Placeholder */}
+      {/* Center Action Toolbar */}
       <div className="flex items-center space-x-2 bg-slate-900/80 border border-slate-800 rounded-lg p-1">
         <button 
-          className="flex items-center space-x-1.5 px-3 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs rounded transition shadow-sm cursor-pointer"
-          title="Run analysis (Frontend placeholder)"
+          onClick={onAnalyze}
+          disabled={isAnalyzing}
+          className="flex items-center space-x-1.5 px-3 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs rounded transition shadow-sm cursor-pointer disabled:opacity-50"
+          title="Run analysis on FastAPI backend"
         >
-          <Play className="w-3.5 h-3.5 fill-slate-950" />
+          {isAnalyzing ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Play className="w-3.5 h-3.5 fill-slate-950" />
+          )}
           <span>Analyze Code</span>
         </button>
         <button 
+          onClick={onReset}
           className="flex items-center space-x-1 px-2 py-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 text-xs rounded transition cursor-pointer"
-          title="Reset editor code"
+          title="Reset code editor"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Reset</span>
@@ -54,9 +59,9 @@ export const Navbar = () => {
 
       {/* Right Controls & Navigation */}
       <div className="flex items-center space-x-3 text-xs">
-        <div className="hidden lg:flex items-center space-x-1 text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-[11px]">Frontend Ready</span>
+        <div className="hidden lg:flex items-center space-x-1.5 text-slate-400">
+          <span className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+          <span className="text-[11px] font-mono">{backendOnline ? 'Backend Online' : 'Connecting API...'}</span>
         </div>
         <div className="h-4 w-[1px] bg-slate-800 hidden sm:block"></div>
         <button className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-md transition cursor-pointer">
