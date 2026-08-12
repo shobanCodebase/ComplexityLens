@@ -3,6 +3,7 @@ import {
   BarChart3, Zap, Cpu, RotateCw, Sparkles, Layers, AlertCircle,
   TrendingUp, Info, Loader2
 } from 'lucide-react';
+import { GrowthChart } from './GrowthChart';
 
 const COMPLEXITY_DESCRIPTIONS = {
   "O(1)": "Constant time — the number of operations does not grow with input size.",
@@ -136,6 +137,8 @@ export const AnalysisPanel = ({ result, isLoading, error }) => {
               </div>
               <p className="text-xs text-slate-400">{result.memory_usage_mb.toFixed(2)} MB (measured in sandbox)</p>
             </div>
+
+            <GrowthChart growthData={result.growth_data} />
           </div>
         )}
       </div>
