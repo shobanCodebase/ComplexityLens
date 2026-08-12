@@ -30,7 +30,7 @@ def _count_recursive(node: ast.AST, multiplier: int, input_size: int, counts: di
         counts["function_calls"] += multiplier
 
     for child in ast.iter_child_nodes(node):
-        if isinstance(node, (ast.For, ast.While)) and child is node.iter:
+        if isinstance(node, ast.For) and child is node.iter:
             _count_recursive(child, multiplier, input_size, counts)
         else:
             _count_recursive(child, child_multiplier, input_size, counts)

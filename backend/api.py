@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import models.schemas
 import analyzer.complexity
 import analyzer.operation_counter
+import analyzer.sandbox
 
 app = FastAPI()
 
@@ -26,10 +27,15 @@ async def read_health():
 async def analyze(request: models.schemas.AnalyzeRequest):
     op_counts = analyzer.operation_counter.count_operations(request.code, request.input_size)
     total_operations = sum(op_counts.values())
+
+    sandbox_result = analyzer.sandbox.run_in_sandbox(request.code)
+    execution_time_ms = sandbox_result["execution_time_ms"] or 0.0
+    memory_usage_mb = sandbox_result["memory_usage_mb"] or 0.0
+
     return models.schemas.AnalyzeResponse(
         language=request.language,
-        execution_time_ms=1.24,
+        execution_time_ms=execution_time_ms,
         operation_count=total_operations,
         complexity=analyzer.complexity.estimate_complexity(request.code),
-        memory_usage_mb=2.31
+        memory_usage_mb=memory_usage_mb,
     )
