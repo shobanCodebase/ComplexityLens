@@ -70,14 +70,14 @@ npm run dev
 cd backend
 python -m pytest tests/ -v
 ```
-17 tests currently passing (unit tests for complexity/operation-counter logic, integration tests hitting real API routes via FastAPI's TestClient).
+20 tests currently passing (unit tests for complexity/operation-counter logic, integration tests hitting real API routes via FastAPI's TestClient).
 
 ## Known Limitations
 
 Being upfront about these — they're intentional scope boundaries, not bugs, unless noted:
 
 - **Python only.** Static analysis (`ast.parse`) only understands Python. Submitting JS/C++ returns a clean `400` error rather than crashing, but there's no real analysis for those languages yet.
-- **Space complexity is not implemented.** The frontend shows "N/A" honestly rather than fake data.
+- **Space complexity is a basic heuristic**, not a rigorous analysis. It detects container-growth patterns (`.append()`/`.add()`/etc. inside a loop, or list/set/dict comprehensions) and reports `O(n)` if found, `O(1)` otherwise. It does **not** distinguish `O(n)` from `O(n²)` space (e.g. a 2D list growing in a nested loop still reports `O(n)`), and does **not** account for recursion's call-stack space (e.g. naive recursive Fibonacci reports `O(1)` space, though it actually uses `O(n)` stack depth). Frontend previously showed "N/A" for this field — needs updating to display the real value now that the backend provides it.
 - **Recursion detection is basic.** Only linear vs. multi-call recursion is distinguished (`O(n)` vs `O(2^n)`) — divide-and-conquer patterns (e.g. merge sort) will be misclassified as exponential rather than `O(n log n)`.
 - **The Docker sandbox doesn't fully block network access** in the subprocess-based fallback (`sandbox_subprocess.py`) used for hosting — only CPU/memory/timeout limits are enforced there, since full network isolation without containers needs more advanced OS-level work not yet built.
 - **`operation_count` on some large-loop test cases has looked lower than expected** in ad-hoc testing — investigated: this is intentional/correct behavior, not a bug. `operation_count` only scales with loops bound to a variable (e.g. `range(n)`), not loops bound to a literal constant (e.g. `range(1000000)`), regardless of the `input_size` parameter sent. `input_size` represents "what `n` should be," and only affects code that actually references a variable in its loop bound. Now covered by `test_hardcoded_constant_loop_does_not_scale_with_input_size`.
