@@ -61,3 +61,10 @@ def test_exponential_recursion_still_detected():
     code = "def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)"
     result = complexity.estimate_complexity(code)
     assert result == "O(2^n)"
+
+def test_recursion_shrinking_arg_not_first_position():
+    # Regression: the size parameter isn't always args[0] -- the classifier
+    # must check all arguments, not just the first.
+    code = "def helper(arr, n):\n    if n <= 1:\n        return\n    helper(arr, n // 2)"
+    result = complexity.estimate_complexity(code)
+    assert result == "O(log n)"
