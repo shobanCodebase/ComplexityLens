@@ -1,17 +1,17 @@
 import subprocess
 import tempfile
 import os
+import time
 
 
 WRAPPER_TEMPLATE = """
 import time
 import resource
 
-__start_time = time.time()
-
+__start_time = time.perf_counter()
 {user_code}
 
-__end_time = time.time()
+__end_time = time.perf_counter()
 __peak_memory_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 print(f"__EXECUTION_TIME_MS__:{{(__end_time - __start_time) * 1000}}")
 print(f"__PEAK_MEMORY_KB__:{{__peak_memory_kb}}")
