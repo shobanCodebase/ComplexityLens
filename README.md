@@ -72,7 +72,7 @@ npm run dev
 cd backend
 python -m pytest tests/ -v
 ```
-23 tests currently passing (unit tests for complexity/operation-counter logic, integration tests hitting real API routes via FastAPI's TestClient).
+24 tests currently passing (unit tests for complexity/operation-counter logic, integration tests hitting real API routes via FastAPI's TestClient).
 
 ## Known Limitations
 
@@ -80,7 +80,7 @@ Being upfront about these — they're intentional scope boundaries, not bugs, un
 
 - **Python only.** Static analysis (`ast.parse`) only understands Python. Submitting JS/C++ returns a clean `400` error rather than crashing, but there's no real analysis for those languages yet.
 - **Space complexity is a basic heuristic**, not a rigorous analysis. It detects container-growth patterns (`.append()`/`.add()`/etc. inside a loop, or list/set/dict comprehensions) and reports `O(n)` if found, `O(1)` otherwise. It does **not** distinguish `O(n)` from `O(n²)` space (e.g. a 2D list growing in a nested loop still reports `O(n)`), and does **not** account for recursion's call-stack space (e.g. naive recursive Fibonacci reports `O(1)` space, though it actually uses `O(n)` stack depth). Frontend previously showed "N/A" for this field — needs updating to display the real value now that the backend provides it.
-- **Recursion detection uses a narrow heuristic**, not a general recurrence solver. It classifies each recursive call's argument as "divides" (e.g. `n // 2`) or "decrements" (e.g. `n - 1`), then infers: single-call decrement → `O(n)`, single-call divide → `O(log n)`, multi-call all-divide → `O(n log n)` (e.g. merge sort), multi-call with any decrement → `O(2^n)` (e.g. naive Fibonacci). This correctly distinguishes divide-and-conquer from true exponential recursion (a real fix from earlier misclassification), but it only inspects the *first* argument of each recursive call and won't catch more complex shrinking patterns (e.g. size passed via a helper variable rather than directly in the call). See `analyzer/recursion_classifier.py` and `tests/test_complexity.py`'s divide-and-conquer tests.
+- **Recursion detection uses a narrow heuristic**, not a general recurrence solver. It classifies each recursive call's argument as "divides" (e.g. `n // 2`) or "decrements" (e.g. `n - 1`), then infers: single-call decrement → `O(n)`, single-call divide → `O(log n)`, multi-call all-divide → `O(n log n)` (e.g. merge sort), multi-call with any decrement → `O(2^n)` (e.g. naive Fibonacci). This correctly distinguishes divide-and-conquer from true exponential recursion (a real fix from earlier misclassification), but it checks all arguments of each recursive call (not just the first) for a divide/decrement pattern, so `helper(arr, n // 2)` is correctly detected even though the shrinking value is in position 1, not 0. See `analyzer/recursion_classifier.py` and `tests/test_complexity.py`'s divide-and-conquer tests.
 - **The Docker sandbox doesn't fully block network access** in the subprocess-based fallback (`sandbox_subprocess.py`) used for hosting — only CPU/memory/timeout limits are enforced there, since full network isolation without containers needs more advanced OS-level work not yet built.
 - **`operation_count` on some large-loop test cases has looked lower than expected** in ad-hoc testing — investigated: this is intentional/correct behavior, not a bug. `operation_count` only scales with loops bound to a variable (e.g. `range(n)`), not loops bound to a literal constant (e.g. `range(1000000)`), regardless of the `input_size` parameter sent. `input_size` represents "what `n` should be," and only affects code that actually references a variable in its loop bound. Now covered by `test_hardcoded_constant_loop_does_not_scale_with_input_size`.
 
@@ -90,6 +90,8 @@ Being upfront about these — they're intentional scope boundaries, not bugs, un
 - **Duplicate API client files**: `frontend/src/api/analyzeApi.js` was unused after the latest merge and has been deleted. `frontend/src/services/api.js` is the canonical API client going forward.
 - **Deployment**: sandbox needs real Docker access, which most free hosting tiers don't provide. Options under consideration: GitHub Student Pack VPS credit (keeps full Docker sandbox), or the subprocess-based fallback (`sandbox_subprocess.py`, weaker isolation, Linux-only) for free-tier hosting (e.g. Render).
 - **C++ execution/analysis**: not started. Realistic path would need `tree-sitter-cpp` or similar — full arbitrary C++ parsing is out of scope.
+- **Java support**: not started. Would need a Java-side AST tool (e.g. `javalang`) plus a `javac`/`java` execution flow in the sandbox — comparable scope to a full new language integration, not a quick add.
+- **Multi-language support in general (C++, Java, etc.)**: deliberately treated as a future major phase, not a quick fix — each language needs its own parser/AST equivalent, its own rewritten complexity/operation-counter/space-complexity logic, and its own sandbox execution flow (compile step, different base image). Python-only is an intentional near-term scope boundary, not an oversight.
 - **Docker Compose**: `docker-compose.yml` drafted for local multi-container orchestration; not yet finalized for deployment.
 
 ## Tech Stack
