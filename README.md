@@ -26,7 +26,7 @@ ComplexityLens/
 └── frontend/
     ├── src/
     │   ├── App.jsx
-    │   ├── api/ (or services/ — see note below)
+    │   ├── services/api.js        # Canonical API client (analyzeAlgorithm, benchmarkAlgorithm, checkBackendHealth)
     │   └── components/
     │       ├── analyzer/  (CodeEditorPanel, AnalysisPanel, GrowthChart, ComplexityChart, OptimizationPanel)
     │       └── layout/
@@ -70,7 +70,7 @@ npm run dev
 cd backend
 python -m pytest tests/ -v
 ```
-16 tests currently passing (unit tests for complexity/operation-counter logic, integration tests hitting real API routes via FastAPI's TestClient).
+17 tests currently passing (unit tests for complexity/operation-counter logic, integration tests hitting real API routes via FastAPI's TestClient).
 
 ## Known Limitations
 
@@ -80,13 +80,13 @@ Being upfront about these — they're intentional scope boundaries, not bugs, un
 - **Space complexity is not implemented.** The frontend shows "N/A" honestly rather than fake data.
 - **Recursion detection is basic.** Only linear vs. multi-call recursion is distinguished (`O(n)` vs `O(2^n)`) — divide-and-conquer patterns (e.g. merge sort) will be misclassified as exponential rather than `O(n log n)`.
 - **The Docker sandbox doesn't fully block network access** in the subprocess-based fallback (`sandbox_subprocess.py`) used for hosting — only CPU/memory/timeout limits are enforced there, since full network isolation without containers needs more advanced OS-level work not yet built.
-- **`operation_count` on some large-loop test cases has looked lower than expected** in ad-hoc testing — flagged for investigation, not yet root-caused.
+- **`operation_count` on some large-loop test cases has looked lower than expected** in ad-hoc testing — investigated: this is intentional/correct behavior, not a bug. `operation_count` only scales with loops bound to a variable (e.g. `range(n)`), not loops bound to a literal constant (e.g. `range(1000000)`), regardless of the `input_size` parameter sent. `input_size` represents "what `n` should be," and only affects code that actually references a variable in its loop bound. Now covered by `test_hardcoded_constant_loop_does_not_scale_with_input_size`.
 
 ## Planned / Open Items — sync before starting
 
 - **`/benchmark` endpoint**: frontend (`services/api.js`) has a `benchmarkAlgorithm()` function calling a `/benchmark` endpoint that doesn't exist on the backend yet. It currently fails silently. Decide: build it, or repoint the frontend at `/analyze`'s existing `growth_data` field (which already provides multi-size data)?
-- **Duplicate API client files**: `frontend/src/api/analyzeApi.js` (unused after latest merge) vs `frontend/src/services/api.js` (currently in use). Should be consolidated — delete the unused one.
-- **Deployment**: sandbox needs real Docker access, which most free hosting tiers don't provide. Options under consideration: GitHub Student Pack VPS credit (keeps full Docker sandbox), or the subprocess-based fallback (`sandbox_subprocess.py`, weaker isolation, Linux-only) for free-tier hosting.
+- **Duplicate API client files**: `frontend/src/api/analyzeApi.js` was unused after the latest merge and has been deleted. `frontend/src/services/api.js` is the canonical API client going forward.
+- **Deployment**: sandbox needs real Docker access, which most free hosting tiers don't provide. Options under consideration: GitHub Student Pack VPS credit (keeps full Docker sandbox), or the subprocess-based fallback (`sandbox_subprocess.py`, weaker isolation, Linux-only) for free-tier hosting (e.g. Render).
 - **C++ execution/analysis**: not started. Realistic path would need `tree-sitter-cpp` or similar — full arbitrary C++ parsing is out of scope.
 - **Docker Compose**: `docker-compose.yml` drafted for local multi-container orchestration; not yet finalized for deployment.
 
