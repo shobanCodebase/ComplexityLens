@@ -35,3 +35,12 @@ def test_while_loop_does_not_crash():
     assert "assignments" in result
     assert "arithmetic" in result
     assert "function_calls" in result
+
+def test_hardcoded_constant_loop_does_not_scale_with_input_size():
+    # A loop bound by a literal constant should NOT scale with input_size,
+    # even if input_size is large -- this distinguishes "loop count in the
+    # code" from "the input_size parameter", which are independent concepts.
+    code = "total = 0\nfor i in range(1000000):\n    total += i\nprint(total)"
+    result = operation_counter.count_operations(code, input_size=1000000)
+    total_ops = sum(result.values())
+    assert total_ops < 100  # should NOT be anywhere near 1,000,000+
