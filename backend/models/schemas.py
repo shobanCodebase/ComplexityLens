@@ -17,6 +17,7 @@ class AnalyzeResponse(BaseModel):
         default=[],
         description="Operation counts across a range of input sizes, for charting growth curves"
     )
+    space_complexity: str = Field(default="O(1)", description="Estimated auxiliary space complexity")
 
 class CompareItem(BaseModel):
     name: str = Field(..., description="Display name for this algorithm/snippet")
